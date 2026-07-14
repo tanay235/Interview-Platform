@@ -21,6 +21,9 @@ export async function apiClient<T>(
   const response = await fetch(url.toString(), {
     headers: {
       "Content-Type": "application/json",
+      ...(typeof window !== "undefined" && window.localStorage.getItem("interview-platform-auth")
+        ? { Authorization: `Bearer ${(JSON.parse(window.localStorage.getItem("interview-platform-auth") ?? "{}")).token}` }
+        : {}),
       ...headers,
     },
     ...rest,
