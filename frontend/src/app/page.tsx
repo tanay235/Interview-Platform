@@ -2,6 +2,7 @@
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 const statistics = [
   { label: "Total interviews", value: "24", change: "+12%", icon: "briefcase" },
@@ -18,6 +19,7 @@ const recentInterviews = [
 ] as const;
 
 export default function Home() {
+  const router = useRouter();
   const { user } = useAuth();
   const firstName = user?.name.split(" ")[0] ?? "there";
 
@@ -33,7 +35,7 @@ export default function Home() {
             Keep your interview preparation moving forward.
           </p>
         </div>
-        <Button size="lg" onClick={() => undefined}>
+        <Button size="lg" onClick={() => router.push("/interviews/new")}>
           <PlusIcon />
           Create interview
         </Button>
