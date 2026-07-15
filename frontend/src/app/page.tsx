@@ -1,131 +1,104 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Input,
-  Modal,
-  ModalCloseButton,
-  ModalFooter,
-  useToast,
-} from "@/components/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import { useAuth } from "@/lib/auth";
+
+const statistics = [
+  { label: "Total interviews", value: "24", change: "+12%", icon: "briefcase" },
+  { label: "Completed", value: "18", change: "+8%", icon: "check" },
+  { label: "In progress", value: "4", change: "+2", icon: "clock" },
+  { label: "Average score", value: "84%", change: "+5%", icon: "chart" },
+] as const;
+
+const recentInterviews = [
+  { company: "Acme Corporation", role: "Senior Frontend Engineer", date: "Today, 10:30 AM", status: "Completed", score: "92%", tone: "success" },
+  { company: "Vertex Labs", role: "Full Stack Developer", date: "Yesterday, 2:00 PM", status: "In progress", score: "—", tone: "warning" },
+  { company: "Northstar Technologies", role: "Product Designer", date: "Jun 12, 2026", status: "Completed", score: "81%", tone: "success" },
+  { company: "Cloudline Systems", role: "Backend Engineer", date: "Jun 10, 2026", status: "Completed", score: "78%", tone: "success" },
+] as const;
 
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const toast = useToast();
+  const { user } = useAuth();
+  const firstName = user?.name.split(" ")[0] ?? "there";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-        <p className="mt-1 text-sm text-muted">
-          Global UI components and layout are ready to use.
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-8">
+      <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-medium text-primary">Your workspace</p>
+          <h2 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+            Welcome back, {firstName}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Keep your interview preparation moving forward.
+          </p>
+        </div>
+        <Button size="lg" onClick={() => undefined}>
+          <PlusIcon />
+          Create interview
+        </Button>
+      </section>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Buttons</CardTitle>
-            <CardDescription>Primary, secondary, and outline variants</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button>Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="danger">Danger</Button>
-            <Button isLoading>Loading</Button>
-          </CardContent>
-        </Card>
+      <section aria-label="Interview statistics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {statistics.map((statistic) => (
+          <Card key={statistic.label} className="p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-muted">{statistic.label}</p>
+                <p className="mt-3 text-3xl font-bold tracking-tight text-foreground">{statistic.value}</p>
+                <p className="mt-2 text-xs font-medium text-success">{statistic.change} from last month</p>
+              </div>
+              <div className="rounded-lg bg-primary/15 p-2.5 text-primary">
+                <StatisticIcon name={statistic.icon} />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Input</CardTitle>
-            <CardDescription>Form input with label and validation</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input label="Email" placeholder="you@example.com" type="email" />
-            <Input
-              label="Password"
-              type="password"
-              error="Password is required"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Modal</CardTitle>
-            <CardDescription>Dialog overlay with actions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
-          </CardContent>
-          <CardFooter>
-            <p className="text-xs text-muted">Press Escape or click outside to close</p>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Toast Notifications</CardTitle>
-            <CardDescription>Transient feedback messages</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.success("Changes saved successfully")}
-            >
-              Success
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.error("Something went wrong")}
-            >
-              Error
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.warning("Please review your input")}
-            >
-              Warning
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.info("New update available")}
-            >
-              Info
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Example Modal"
-        description="This is a reusable modal component."
-        size="md"
-      >
-        <p className="text-sm text-muted">
-          Use modals for confirmations, forms, or any focused interaction.
-        </p>
-        <ModalFooter>
-          <ModalCloseButton onClose={() => setIsModalOpen(false)} />
-          <Button onClick={() => setIsModalOpen(false)}>Confirm</Button>
-        </ModalFooter>
-      </Modal>
+      <Card padding="none">
+        <CardHeader className="mb-0 flex-row items-center justify-between border-b border-border px-5 py-5 sm:px-6">
+          <div>
+            <CardTitle>Recent interviews</CardTitle>
+            <CardDescription className="mt-1">Track your latest interview activity</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm">View all</Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {recentInterviews.map((interview) => (
+              <div key={`${interview.company}-${interview.role}`} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-hover text-sm font-semibold text-primary">
+                    {interview.company.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{interview.role}</p>
+                    <p className="truncate text-xs text-muted">{interview.company} · {interview.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-5 pl-13 sm:justify-end sm:pl-0">
+                  <span className={interview.tone === "success" ? "rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success" : "rounded-full bg-warning/10 px-2.5 py-1 text-xs font-medium text-warning"}>
+                    {interview.status}
+                  </span>
+                  <span className="w-10 text-right text-sm font-semibold text-foreground">{interview.score}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+function PlusIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>;
+}
+
+function StatisticIcon({ name }: { name: (typeof statistics)[number]["icon"] }) {
+  if (name === "check") return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4 4L19 6" /></svg>;
+  if (name === "clock") return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="8.25" /><path strokeLinecap="round" d="M12 7.5v4.75l3 1.75" /></svg>;
+  if (name === "chart") return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5v-7m5 7V8m5 11.5V4.5m5 15v-10" /></svg>;
+  return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75a2.25 2.25 0 0 1-2.25-2.25V6.75Z" /><path strokeLinecap="round" d="M8 9h8M8 13h5" /></svg>;
 }
