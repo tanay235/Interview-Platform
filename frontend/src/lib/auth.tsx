@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { apiClient } from "./api";
-import type { AuthResponse, User } from "@/types";
+import type { AuthResponse, ProfileResponse, User } from "@/types";
 
 const AUTH_STORAGE_KEY = "interview-platform-auth";
 
@@ -17,6 +17,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  updateProfile: (profile: Omit<User, "id">) => Promise<void>;
   logout: () => void;
 }
 
@@ -44,12 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextAuth));
   };
 
+  const saveProfile = (response: ProfileResponse) => {
+    if (!auth) return;
+    const nextAuth = { token: response.data.token ?? auth.token, user: response.data.user };
+    setAuth(nextAuth);
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextAuth));
+  };
+
   const value = useMemo<AuthContextValue>(() => ({
     user: auth?.user ?? null,
     token: auth?.token ?? null,
     isLoading,
     login: async (email, password) => saveAuth(await apiClient<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) })),
     signup: async (name, email, password) => saveAuth(await apiClient<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify({ name, email, password }) })),
+    updateProfile: async (profile) => saveProfile(await apiClient<ProfileResponse>("/users/profile", { method: "PUT", body: JSON.stringify(profile) })),
     logout: () => {
       setAuth(null);
       window.localStorage.removeItem(AUTH_STORAGE_KEY);

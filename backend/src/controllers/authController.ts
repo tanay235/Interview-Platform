@@ -10,7 +10,14 @@ interface AuthBody {
 }
 
 function publicUser(user: UserDocument) {
-  return { id: user.id, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    skills: user.skills ?? [],
+    experienceLevel: user.experienceLevel ?? "entry",
+    preferredRole: user.preferredRole ?? "",
+  };
 }
 
 export async function register(req: Request<unknown, unknown, AuthBody>, res: Response): Promise<void> {
