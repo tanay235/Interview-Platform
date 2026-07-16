@@ -81,6 +81,45 @@ async function findOwnedInterview(req: AuthenticatedRequest, id: string) {
     : null;
 }
 
+export async function listInterviews(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  const searchFilter = search
+    ? { $or: [{ title: { $regex: search, $options: "i" } }, { role: { $regex: search, $options: "i" } }, { technologies: { $regex: search, $options: "i" } }] }
+    : {};
+  const interviews = userId
+    ? await InterviewModel.find({ user: userId, ...searchFilter }).sort({ createdAt: -1 }).lean()
+    : [];
+
+  res.json({
+    success: true,
+    data: {
+      interviews: interviews.map((interview) => ({
+        id: interview._id.toString(),
+        title: interview.title,
+        role: interview.role,
+        difficulty: interview.difficulty,
+        technologies: interview.technologies,
+        status: interview.status,
+        answeredQuestions: interview.answers.filter((answer) => answer.trim()).length,
+        totalQuestions: interview.questions.length,
+        createdAt: interview.createdAt,
+      })),
+    },
+  });
+}
+
+export async function deleteInterview(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const interviewId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const interview = await findOwnedInterview(req, interviewId);
+  if (!interview) {
+    res.status(404).json({ success: false, message: "Interview not found" });
+    return;
+  }
+  await interview.deleteOne();
+  res.json({ success: true, message: "Interview deleted" });
+}
+
 export async function getInterviewRoom(req: AuthenticatedRequest, res: Response): Promise<void> {
   const interviewId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const interview = await findOwnedInterview(req, interviewId);

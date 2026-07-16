@@ -64,7 +64,7 @@ export default function Home() {
             <CardTitle>Recent interviews</CardTitle>
             <CardDescription className="mt-1">Track your latest interview activity</CardDescription>
           </div>
-          <Button variant="ghost" size="sm">View all</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/interviews")}>View all</Button>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
