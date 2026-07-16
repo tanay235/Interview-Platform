@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { Types } from "mongoose";
 import type { AuthenticatedRequest } from "../middleware/auth";
-import { InterviewModel, type InterviewDifficulty } from "../models/Interview";
+import { InterviewModel, type CodingLanguage, type InterviewDifficulty } from "../models/Interview";
 
 interface InterviewBody {
   title?: string;
@@ -12,6 +12,14 @@ interface InterviewBody {
 }
 
 const difficulties: InterviewDifficulty[] = ["easy", "medium", "hard"];
+const codingLanguages: CodingLanguage[] = ["cpp", "java", "python", "javascript"];
+
+const starterCode: Record<CodingLanguage, string> = {
+  cpp: "#include <iostream>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+  java: "public class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}\n",
+  python: "def solve():\n    # Write your solution here\n    pass\n\nif __name__ == \"__main__\":\n    solve()\n",
+  javascript: "function solve() {\n  // Write your solution here\n}\n\nsolve();\n",
+};
 
 function buildQuestions(role: string, technologies: string[], count: number): string[] {
   const technology = technologies[0];
@@ -57,6 +65,7 @@ export async function createInterview(
     numberOfQuestions,
     questions: buildQuestions(role, technologies, numberOfQuestions),
     answers: Array.from({ length: numberOfQuestions }, () => ""),
+    code: starterCode,
   });
 
   res.status(201).json({
@@ -91,9 +100,56 @@ export async function getInterviewRoom(req: AuthenticatedRequest, res: Response)
         questions: interview.questions,
         answers: interview.answers,
         status: interview.status,
+        code: interview.code ?? starterCode,
+        submissions: interview.submissions ?? [],
       },
     },
   });
+}
+
+interface CodeBody { language?: CodingLanguage; code?: string }
+
+function isCodingLanguage(language: string | undefined): language is CodingLanguage {
+  return Boolean(language && codingLanguages.includes(language as CodingLanguage));
+}
+
+export async function saveCode(req: AuthenticatedRequest & { body: CodeBody }, res: Response): Promise<void> {
+  const interviewId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const interview = await findOwnedInterview(req, interviewId);
+  if (!interview) {
+    res.status(404).json({ success: false, message: "Interview not found" });
+    return;
+  }
+  if (!isCodingLanguage(req.body.language) || typeof req.body.code !== "string") {
+    res.status(400).json({ success: false, message: "Invalid code or language" });
+    return;
+  }
+  const language = req.body.language as CodingLanguage;
+  const code = (interview.code ?? {}) as Record<CodingLanguage, string>;
+  code[language] = req.body.code;
+  interview.code = code;
+  await interview.save();
+  res.json({ success: true, message: "Code saved" });
+}
+
+export async function submitCode(req: AuthenticatedRequest & { body: CodeBody }, res: Response): Promise<void> {
+  const interviewId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const interview = await findOwnedInterview(req, interviewId);
+  if (!interview) {
+    res.status(404).json({ success: false, message: "Interview not found" });
+    return;
+  }
+  if (!isCodingLanguage(req.body.language) || typeof req.body.code !== "string" || !req.body.code.trim()) {
+    res.status(400).json({ success: false, message: "Add code before submitting" });
+    return;
+  }
+  const language = req.body.language as CodingLanguage;
+  const code = (interview.code ?? {}) as Record<CodingLanguage, string>;
+  code[language] = req.body.code;
+  interview.code = code;
+  interview.submissions.push({ language, code: req.body.code, submittedAt: new Date() });
+  await interview.save();
+  res.json({ success: true, message: "Code submitted", data: { submittedAt: new Date() } });
 }
 
 interface AnswerBody { questionIndex?: number; answer?: string }

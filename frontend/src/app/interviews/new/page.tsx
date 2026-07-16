@@ -46,7 +46,7 @@ export default function NewInterviewPage() {
         body: JSON.stringify({ title: form.title, role: form.role, difficulty: form.difficulty, technologies, numberOfQuestions }),
       });
       toast.success("Interview configuration saved");
-      if (response.data?.interview?.id) router.push(`/interviews/${response.data.interview.id}/room`);
+      if (response.data?.interview?.id) router.push(`/interviews/${response.data.interview.id}/coding`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to save interview configuration");
     } finally {

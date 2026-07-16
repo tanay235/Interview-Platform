@@ -2,6 +2,13 @@ import { Schema, Types, model, type HydratedDocument } from "mongoose";
 
 export type InterviewDifficulty = "easy" | "medium" | "hard";
 export type InterviewStatus = "in-progress" | "completed";
+export type CodingLanguage = "cpp" | "java" | "python" | "javascript";
+
+export interface CodeSubmission {
+  language: CodingLanguage;
+  code: string;
+  submittedAt: Date;
+}
 
 export interface Interview {
   user: Types.ObjectId;
@@ -14,6 +21,8 @@ export interface Interview {
   answers: string[];
   status: InterviewStatus;
   endedAt?: Date;
+  code: Record<CodingLanguage, string>;
+  submissions: CodeSubmission[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +41,11 @@ const interviewSchema = new Schema<Interview>(
     answers: { type: [String], required: true, default: [] },
     status: { type: String, enum: ["in-progress", "completed"], default: "in-progress" },
     endedAt: { type: Date },
+    code: { type: Schema.Types.Mixed, default: {} },
+    submissions: {
+      type: [{ language: String, code: String, submittedAt: Date }],
+      default: [],
+    },
   },
   { timestamps: true },
 );
