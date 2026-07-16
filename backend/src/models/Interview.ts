@@ -1,6 +1,7 @@
 import { Schema, Types, model, type HydratedDocument } from "mongoose";
 
 export type InterviewDifficulty = "easy" | "medium" | "hard";
+export type InterviewStatus = "in-progress" | "completed";
 
 export interface Interview {
   user: Types.ObjectId;
@@ -9,6 +10,10 @@ export interface Interview {
   difficulty: InterviewDifficulty;
   technologies: string[];
   numberOfQuestions: number;
+  questions: string[];
+  answers: string[];
+  status: InterviewStatus;
+  endedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +28,10 @@ const interviewSchema = new Schema<Interview>(
     difficulty: { type: String, enum: ["easy", "medium", "hard"], required: true },
     technologies: { type: [String], required: true, default: [] },
     numberOfQuestions: { type: Number, required: true, min: 1, max: 50 },
+    questions: { type: [String], required: true, default: [] },
+    answers: { type: [String], required: true, default: [] },
+    status: { type: String, enum: ["in-progress", "completed"], default: "in-progress" },
+    endedAt: { type: Date },
   },
   { timestamps: true },
 );

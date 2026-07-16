@@ -41,12 +41,12 @@ export default function NewInterviewPage() {
 
     setIsSaving(true);
     try {
-      await apiClient<{ success: boolean; message?: string }>("/interviews", {
+      const response = await apiClient<{ success: boolean; message?: string; data?: { interview?: { id: string } } }>("/interviews", {
         method: "POST",
         body: JSON.stringify({ title: form.title, role: form.role, difficulty: form.difficulty, technologies, numberOfQuestions }),
       });
       toast.success("Interview configuration saved");
-      router.push("/");
+      if (response.data?.interview?.id) router.push(`/interviews/${response.data.interview.id}/room`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to save interview configuration");
     } finally {
