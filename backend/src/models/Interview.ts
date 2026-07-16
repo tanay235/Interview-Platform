@@ -36,7 +36,7 @@ const interviewSchema = new Schema<Interview>(
     role: { type: String, required: true, trim: true, maxlength: 100 },
     difficulty: { type: String, enum: ["easy", "medium", "hard"], required: true },
     technologies: { type: [String], required: true, default: [] },
-    numberOfQuestions: { type: Number, required: true, min: 1, max: 50 },
+    numberOfQuestions: { type: Number, required: true, min: 0, max: 50, default: 0 },
     questions: { type: [String], required: true, default: [] },
     answers: { type: [String], required: true, default: [] },
     status: { type: String, enum: ["in-progress", "completed"], default: "in-progress" },

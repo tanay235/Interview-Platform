@@ -12,7 +12,7 @@ export default function NewInterviewPage() {
   const router = useRouter();
   const toast = useToast();
   const { user, isLoading: isAuthLoading } = useAuth();
-  const [form, setForm] = useState({ title: "", role: "", difficulty: "medium" as Difficulty, technologies: "", numberOfQuestions: "10" });
+  const [form, setForm] = useState({ title: "", role: "", difficulty: "medium" as Difficulty, technologies: "" });
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -28,25 +28,18 @@ export default function NewInterviewPage() {
     event.preventDefault();
     setError("");
     const technologies = form.technologies.split(",").map((technology) => technology.trim()).filter(Boolean);
-    const numberOfQuestions = Number(form.numberOfQuestions);
-
     if (form.title.trim().length < 2 || form.role.trim().length < 2 || technologies.length === 0) {
       setError("Complete the title, role, and technologies fields.");
       return;
     }
-    if (!Number.isInteger(numberOfQuestions) || numberOfQuestions < 1 || numberOfQuestions > 50) {
-      setError("Choose between 1 and 50 questions.");
-      return;
-    }
-
     setIsSaving(true);
     try {
       const response = await apiClient<{ success: boolean; message?: string; data?: { interview?: { id: string } } }>("/interviews", {
         method: "POST",
-        body: JSON.stringify({ title: form.title, role: form.role, difficulty: form.difficulty, technologies, numberOfQuestions }),
+        body: JSON.stringify({ title: form.title, role: form.role, difficulty: form.difficulty, technologies }),
       });
       toast.success("Interview configuration saved");
-      if (response.data?.interview?.id) router.push(`/interviews/${response.data.interview.id}/coding`);
+      if (response.data?.interview?.id) router.push(`/interviews/${response.data.interview.id}/room`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to save interview configuration");
     } finally {
@@ -86,7 +79,6 @@ export default function NewInterviewPage() {
               </div>
             </div>
             <Input label="Technologies" helperText="Separate technologies with commas" value={form.technologies} onChange={(event) => updateField("technologies", event.target.value)} placeholder="React, TypeScript, Node.js" required />
-            <Input label="Number of questions" type="number" min={1} max={50} value={form.numberOfQuestions} onChange={(event) => updateField("numberOfQuestions", event.target.value)} required />
             {error && <p className="text-sm text-error">{error}</p>}
             <div className="flex flex-col-reverse justify-end gap-3 border-t border-border pt-5 sm:flex-row">
               <Button type="button" variant="ghost" onClick={() => router.push("/")}>Cancel</Button>

@@ -21,18 +21,6 @@ const starterCode: Record<CodingLanguage, string> = {
   javascript: "function solve() {\n  // Write your solution here\n}\n\nsolve();\n",
 };
 
-function buildQuestions(role: string, technologies: string[], count: number): string[] {
-  const technology = technologies[0];
-  const templates = [
-    `How would you design a reliable ${role} solution using ${technology}?`,
-    `What are the most important trade-offs you consider when working with ${technology}?`,
-    `Describe a difficult problem you solved in a ${role} project and how you approached it.`,
-    `How do you test and monitor a production feature in a ${role} role?`,
-    `How would you improve the performance and maintainability of a ${role} codebase?`,
-  ];
-  return Array.from({ length: count }, (_, index) => templates[index % templates.length]);
-}
-
 export async function createInterview(
   req: Request<unknown, unknown, InterviewBody> & AuthenticatedRequest,
   res: Response,
@@ -41,17 +29,16 @@ export async function createInterview(
   const title = req.body.title?.trim();
   const role = req.body.role?.trim();
   const technologies = req.body.technologies?.map((technology: string) => technology.trim()).filter(Boolean);
-  const numberOfQuestions = Number(req.body.numberOfQuestions);
 
   if (!userId || !Types.ObjectId.isValid(userId)) {
     res.status(401).json({ success: false, message: "Authentication required" });
     return;
   }
-  if (!title || !role || !req.body.difficulty || !technologies?.length || !Number.isInteger(numberOfQuestions)) {
+  if (!title || !role || !req.body.difficulty || !technologies?.length) {
     res.status(400).json({ success: false, message: "Complete all interview configuration fields" });
     return;
   }
-  if (title.length > 120 || role.length > 100 || !difficulties.includes(req.body.difficulty) || numberOfQuestions < 1 || numberOfQuestions > 50) {
+  if (title.length > 120 || role.length > 100 || !difficulties.includes(req.body.difficulty)) {
     res.status(400).json({ success: false, message: "Please check the interview configuration values" });
     return;
   }
@@ -62,9 +49,9 @@ export async function createInterview(
     role,
     difficulty: req.body.difficulty,
     technologies,
-    numberOfQuestions,
-    questions: buildQuestions(role, technologies, numberOfQuestions),
-    answers: Array.from({ length: numberOfQuestions }, () => ""),
+    numberOfQuestions: 0,
+    questions: [],
+    answers: [],
     code: starterCode,
   });
 
@@ -93,18 +80,24 @@ export async function listInterviews(req: AuthenticatedRequest, res: Response): 
 
   res.json({
     success: true,
-    data: {
-      interviews: interviews.map((interview) => ({
+      data: {
+      interviews: interviews.map((interview) => {
+        const answeredQuestions = interview.answers.filter((answer) => answer.trim()).length;
+        const completionPercentage = interview.questions.length ? Math.round((answeredQuestions / interview.questions.length) * 100) : 0;
+        const score = Math.min(100, Math.round(completionPercentage * 0.8 + (interview.submissions.length > 0 ? 20 : 0)));
+        return {
         id: interview._id.toString(),
         title: interview.title,
         role: interview.role,
         difficulty: interview.difficulty,
         technologies: interview.technologies,
         status: interview.status,
-        answeredQuestions: interview.answers.filter((answer) => answer.trim()).length,
-        totalQuestions: interview.questions.length,
-        createdAt: interview.createdAt,
-      })),
+          answeredQuestions,
+          totalQuestions: interview.questions.length,
+          score,
+          createdAt: interview.createdAt,
+        };
+      }),
     },
   });
 }

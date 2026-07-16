@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/lib/auth";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -8,6 +9,8 @@ interface NavbarProps {
 }
 
 export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
+  const { user } = useAuth();
+  const initials = user?.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "IP";
   return (
     <header
       className={cn(
@@ -57,10 +60,10 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
           aria-label="User menu"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
-            IP
+            {initials}
           </div>
           <span className="hidden text-sm font-medium text-foreground md:block">
-            User
+            {user?.name}
           </span>
         </button>
       </div>

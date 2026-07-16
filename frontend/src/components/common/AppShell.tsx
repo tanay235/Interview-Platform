@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { PageLoader } from "@/components/ui";
+import { useAuth } from "@/lib/auth";
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 
@@ -11,9 +13,17 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isLoading && !user && pathname !== "/login" && pathname !== "/signup") router.replace("/login");
+  }, [isLoading, pathname, router, user]);
+
   if (pathname === "/login" || pathname === "/signup") return <>{children}</>;
+
+  if (isLoading || !user) return <PageLoader label="Checking your account..." />;
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);
