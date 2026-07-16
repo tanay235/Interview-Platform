@@ -184,3 +184,45 @@ export async function endInterview(req: AuthenticatedRequest, res: Response): Pr
   await interview.save();
   res.json({ success: true, message: "Interview ended" });
 }
+
+export async function getInterviewResult(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const interviewId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const interview = await findOwnedInterview(req, interviewId);
+  if (!interview) {
+    res.status(404).json({ success: false, message: "Interview not found" });
+    return;
+  }
+
+  const totalQuestions = interview.questions.length;
+  const answeredQuestions = interview.answers.filter((answer) => answer.trim().length > 0).length;
+  const completionPercentage = totalQuestions ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  const codingSubmitted = interview.submissions.length > 0;
+  const overallScore = Math.min(100, Math.round(completionPercentage * 0.8 + (codingSubmitted ? 20 : 0)));
+  const strengths = [
+    ...(answeredQuestions > 0 ? [`Answered ${answeredQuestions} of ${totalQuestions} interview questions`] : []),
+    ...(codingSubmitted ? ["Submitted a coding solution"] : []),
+    ...(completionPercentage >= 80 ? ["Maintained strong interview completion"] : []),
+  ];
+  const weaknesses = [
+    ...(answeredQuestions < totalQuestions ? [`${totalQuestions - answeredQuestions} question${totalQuestions - answeredQuestions === 1 ? " remains" : "s remain"} unanswered`] : []),
+    ...(!codingSubmitted ? ["No coding solution was submitted"] : []),
+    ...(strengths.length === 0 ? ["Start answering questions to build your performance profile"] : []),
+  ];
+
+  res.json({
+    success: true,
+    data: {
+      result: {
+        interview: { id: interview.id, title: interview.title, role: interview.role, difficulty: interview.difficulty },
+        overallScore,
+        answeredQuestions,
+        totalQuestions,
+        completionPercentage,
+        codingSubmitted,
+        strengths,
+        weaknesses,
+        status: interview.status,
+      },
+    },
+  });
+}

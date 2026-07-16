@@ -83,8 +83,8 @@ export default function InterviewRoomPage() {
     if (!interview || !window.confirm("Are you sure you want to end this interview?")) return;
     try {
       await apiClient<{ success: boolean }>(`/interviews/${interview.id}/end`, { method: "POST" });
-      setInterview((current) => current ? { ...current, status: "completed" } : current);
       toast.success("Interview ended");
+      router.push(`/interviews/${interview.id}/result`);
     } catch (endError) {
       toast.error(endError instanceof Error ? endError.message : "Unable to end interview");
     }
